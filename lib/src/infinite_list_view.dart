@@ -17,8 +17,6 @@ class InfiniteListView<PageKeyType, ItemType, ScrollStateInfoType>
         key,
     required this.initialPageKey,
     required this.requestPage,
-    required this.getScrollStateInfo,
-    required this.shouldHoldScroll,
     required this.itemBuilder,
     required this.separatorBuilder,
     this.autoScrollThreshold = 50,
@@ -34,13 +32,6 @@ class InfiniteListView<PageKeyType, ItemType, ScrollStateInfoType>
   final PageKeyType initialPageKey;
 
   final FutureOr<void> Function(PageKeyType pageKey) requestPage;
-
-  final ScrollStateInfoType? Function() getScrollStateInfo;
-
-  final bool Function({
-    required ScrollStateInfoType? oldScrollStateInfo,
-    required ScrollStateInfoType? newScrollStateInfo,
-  }) shouldHoldScroll;
 
   final Widget Function(
     BuildContext context,
@@ -89,13 +80,15 @@ class InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>
   bool _isFetching = false;
   bool _isLastPageFetched = false;
   int _autoScrollCalls = 0;
-  ScrollStateInfoType? _scrollStateInfo;
+
+  // Used for comparing whether top item changed
+  bool _isPageAdded = false;
 
   final _listViewKey = GlobalKey();
   final _loaderKey = GlobalKey<InfiniteLoaderState>();
 
   late final _scrollPhysics = InfiniteScrollPhysics(
-    shouldHoldScroll: _shouldHoldScroll,
+    onListSizeChanged: _onListSizeChanged,
   );
   final _scrollCtrlr = ScrollController();
 
@@ -131,6 +124,7 @@ class InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>
       ]);
     });
 
+    _isPageAdded = true;
     _pageKey = pageKey;
 
     HapticFeedback.mediumImpact();
@@ -170,18 +164,11 @@ class InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>
     });
   }
 
-  bool _shouldHoldScroll() {
-    final newState = widget.getScrollStateInfo();
+  bool _onListSizeChanged() {
+    final maintainScroll = _isPageAdded;
+    _isPageAdded = false;
 
-    final tempOldState = _scrollStateInfo;
-    _scrollStateInfo = newState;
-
-    debugPrint('_shouldHoldScroll. $tempOldState => $newState');
-
-    return widget.shouldHoldScroll(
-      oldScrollStateInfo: tempOldState,
-      newScrollStateInfo: newState,
-    );
+    return maintainScroll;
   }
 
   void _handleScrollChange() {

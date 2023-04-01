@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 
 class InfiniteScrollPhysics extends ScrollPhysics {
-  final bool Function() shouldHoldScroll;
+  /// Should return whether to maintain the view
+  final bool Function() onListSizeChanged;
 
   const InfiniteScrollPhysics({
     super.parent,
-    required this.shouldHoldScroll,
+    required this.onListSizeChanged,
   });
 
   @override
   InfiniteScrollPhysics applyTo(ScrollPhysics? ancestor) {
     return InfiniteScrollPhysics(
       parent: buildParent(ancestor),
-      shouldHoldScroll: shouldHoldScroll,
+      onListSizeChanged: onListSizeChanged,
     );
   }
 
@@ -32,7 +33,7 @@ class InfiniteScrollPhysics extends ScrollPhysics {
       velocity: velocity,
     );
 
-    if (!shouldHoldScroll()) {
+    if (!onListSizeChanged()) {
       debugPrint('===== Change doesn\'t push the view. No need for adjusting');
       return position;
     }
