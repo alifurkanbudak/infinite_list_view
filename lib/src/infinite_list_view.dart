@@ -5,6 +5,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:infinite_list_view/src/visibility_controller.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 import 'infinite_loader.dart';
 import 'infinite_scroll_physics.dart';
@@ -27,6 +29,8 @@ class InfiniteListView<PageKeyType, ItemType, ScrollStateInfoType>
     this.loaderSpacing = 4,
     this.androidLoaderColor,
     this.padding,
+    this.shouldWatchVisiblity,
+    this.onVisibilityChange,
   }) : super(key: key);
 
   final PageKeyType initialPageKey;
@@ -36,13 +40,16 @@ class InfiniteListView<PageKeyType, ItemType, ScrollStateInfoType>
   final Widget Function(
     BuildContext context,
     int index,
-    ItemType item,
   ) itemBuilder;
 
   final Widget Function(
     BuildContext context,
     int index,
   ) separatorBuilder;
+
+  final bool Function(int index)? shouldWatchVisiblity;
+
+  final void Function(Set<ItemType> visibleItems)? onVisibilityChange;
 
   final EdgeInsets? padding;
 
@@ -72,6 +79,10 @@ class InfiniteListView<PageKeyType, ItemType, ScrollStateInfoType>
 class InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>
     extends State<
         InfiniteListView<PageKeyType, ItemType, ScrollStateInfoType>> {
+  late final _visibilityCtrlr = VisibilityController<ItemType>(
+    widget.onVisibilityChange ?? (_) {},
+  );
+
   late PageKeyType _pageKey = widget.initialPageKey;
 
   UnmodifiableListView<ItemType> get items => _items;
@@ -217,6 +228,31 @@ class InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>
     return true;
   }
 
+  Widget _itemBuilder(BuildContext context, int index) {
+    Widget itemWidget = widget.itemBuilder(context, index);
+
+    if (index < _items.length) {
+      itemWidget = Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [itemWidget, widget.separatorBuilder(context, index)],
+      );
+    }
+
+    if (widget.shouldWatchVisiblity?.call(index) == true) {
+      itemWidget = VisibilityDetector(
+        key: ObjectKey(_items[index]),
+        onVisibilityChanged: (info) => _visibilityCtrlr.updateItemVisibility(
+          info: info,
+          item: _items[index],
+        ),
+        child: itemWidget,
+      );
+    }
+
+    return itemWidget;
+  }
+
   @override
   Widget build(BuildContext context) {
     // Give space for the page loader widget
@@ -240,14 +276,7 @@ class InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>
           widget.padding?.right ?? 0,
           widget.padding?.bottom ?? 0,
         ),
-        itemBuilder: (context, index) => Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            widget.itemBuilder(context, index, _items[index]),
-            if (index < _items.length) widget.separatorBuilder(context, index)
-          ],
-        ),
+        itemBuilder: _itemBuilder,
       ),
     );
 
