@@ -107,6 +107,8 @@ class InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>
   void initState() {
     super.initState();
 
+    VisibilityDetectorController.instance.updateInterval =
+        const Duration(milliseconds: 100);
     _scrollCtrlr.addListener(_handleScrollChange);
     _requestPage();
   }
@@ -123,9 +125,6 @@ class InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>
     required PageKeyType pageKey,
     required bool isLastPage,
   }) {
-    debugPrint(
-        'addPage. items.length: ${pageItems.length}, pageKey: $pageKey, isLastPage: $isLastPage');
-
     setState(() {
       _isLastPageFetched = isLastPage;
       _isFetching = false;
@@ -195,8 +194,6 @@ class InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>
     if (_isFetching || _isLastPageFetched) return;
     setState(() => _isFetching = true);
 
-    debugPrint('_fetchPage. pageKey: $_pageKey');
-
     widget.requestPage(_pageKey);
   }
 
@@ -231,14 +228,6 @@ class InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>
   Widget _itemBuilder(BuildContext context, int index) {
     Widget itemWidget = widget.itemBuilder(context, index);
 
-    if (index < _items.length) {
-      itemWidget = Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [itemWidget, widget.separatorBuilder(context, index)],
-      );
-    }
-
     if (widget.shouldWatchVisiblity?.call(index) == true) {
       itemWidget = VisibilityDetector(
         key: ObjectKey(_items[index]),
@@ -247,6 +236,14 @@ class InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>
           item: _items[index],
         ),
         child: itemWidget,
+      );
+    }
+
+    if (index < _items.length) {
+      itemWidget = Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [itemWidget, widget.separatorBuilder(context, index)],
       );
     }
 

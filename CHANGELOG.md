@@ -4,3 +4,7 @@
 
 ## 1.0.1
 - Added visibility detector 
+- Simplified should maintain scroll view logic
+
+## 1.0.2
+- Fixes & improvements
