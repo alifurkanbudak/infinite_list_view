@@ -4,7 +4,8 @@ Allows you to create paginated infinite lists with smooth transitions.
 ## Features
 - Maintains the view when a new page is added. Normally, the viewable content jumps when new items are added to a list. 
 - Supports inserting items on top of the list. Auto scrolls to view those new items if the user is viewing the bottom of the list.
-
+- You can also keep track of visible items
+- 
 ## Usage
 Use it like a normal `ListView` in your widget tree.
 
@@ -34,19 +35,6 @@ Using the `_listKey`, you can add pages and insert items to the list.
     );
   }
 
-  String? _getScrollStateInfo() {
-    final items = _listKey.currentState!.items;
-
-    return items.isEmpty ? null : items.first.id;
-  }
-
-  bool _shouldHoldScroll({
-    required String? newScrollStateInfo,
-    required String? oldScrollStateInfo,
-  }) {
-    return oldScrollStateInfo != newScrollStateInfo;
-  }
-
   void _addNewMessage() {
     _listKey.currentState!.addNewItems(
       items: [ItemModel(Object().hashCode.toString())],
@@ -67,10 +55,15 @@ Using the `_listKey`, you can add pages and insert items to the list.
         key: _listKey,
         initialPageKey: '',
         requestPage: _requestPage,
-        getScrollStateInfo: _getScrollStateInfo,
-        shouldHoldScroll: _shouldHoldScroll,
-        itemBuilder: (context, index, item) => ItemTile(model: item),
+        itemBuilder: (context, index) => ItemTile(
+          model: _listKey.currentState!.items[index],
+        ),
         separatorBuilder: (_, __) => const SizedBox(height: 12),
+        shouldWatchVisiblity: (index) =>
+            (_listKey.currentState!.items.length - index) % 5 == 0,
+        onVisibilityChange: (visibleItems) {
+          debugPrint('onVisibilityChange: ${visibleItems.map((e) => e.id)}');
+        },
         padding: const EdgeInsets.all(16),
         androidLoaderColor: Colors.pink,
       ),

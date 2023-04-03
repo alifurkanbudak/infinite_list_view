@@ -8,3 +8,6 @@
 
 ## 1.0.2
 - Fixes & improvements
+
+## 1.0.3
+- Added `updateItem` method

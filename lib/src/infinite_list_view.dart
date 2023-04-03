@@ -168,6 +168,17 @@ class InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>
     return autoScroll;
   }
 
+  /// Optimally shouldn't cause size change
+  void updateItem({required int index, required ItemType item}) {
+    setState(() {
+      _items = UnmodifiableListView([
+        ..._items.sublist(0, index),
+        item,
+        ..._items.sublist(index + 1),
+      ]);
+    });
+  }
+
   void onError(Object error) {
     setState(() {
       _isFetching = false;
