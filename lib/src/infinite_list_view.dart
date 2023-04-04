@@ -100,7 +100,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
   late final _scrollPhysics = InfiniteScrollPhysics(
     onListSizeChanged: _onListSizeChanged,
   );
-  final scrollCtrlr = ScrollController();
+  final _scrollCtrlr = ScrollController();
 
   bool _inAutoScrollRegion = true;
 
@@ -110,13 +110,13 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
     VisibilityDetectorController.instance.updateInterval =
         const Duration(milliseconds: 100);
-    scrollCtrlr.addListener(_handleScrollChange);
+    _scrollCtrlr.addListener(_handleScrollChange);
     _requestPage();
   }
 
   @override
   void dispose() {
-    scrollCtrlr.dispose();
+    _scrollCtrlr.dispose();
 
     super.dispose();
   }
@@ -149,7 +149,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
   /// Returns true if the list auto scrolled to view new messages
   bool addNewItems({required List<ItemType> items}) {
     final offsetDiff =
-        scrollCtrlr.position.maxScrollExtent - scrollCtrlr.offset;
+        _scrollCtrlr.position.maxScrollExtent - _scrollCtrlr.offset;
     final autoScroll =
         _autoScrollCalls > 0 || offsetDiff <= widget.autoScrollThreshold;
 
@@ -191,6 +191,10 @@ class InfiniteListViewState<PageKeyType, ItemType>
     });
   }
 
+  void scrollToBottom() {
+    _autoScrollToBottom();
+  }
+
   bool _onListSizeChanged() {
     final maintainScroll = _isPageAdded;
     _isPageAdded = false;
@@ -199,7 +203,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
   }
 
   void _handleScrollChange() {
-    final offset = scrollCtrlr.offset;
+    final offset = _scrollCtrlr.offset;
 
     _loaderKey.currentState!.updateOffset(offset);
 
@@ -208,7 +212,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
     if (requestPage) _requestPage();
 
     // Auto scroll state check
-    final newAutoScrollState = scrollCtrlr.position.maxScrollExtent - offset <=
+    final newAutoScrollState = _scrollCtrlr.position.maxScrollExtent - offset <=
         widget.autoScrollThreshold;
     final oldAutoScrollState = _inAutoScrollRegion;
 
@@ -228,7 +232,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
   Future<void> _autoScrollToBottom() async {
     _autoScrollCalls += 1;
-    final diff = scrollCtrlr.position.maxScrollExtent - scrollCtrlr.offset;
+    final diff = _scrollCtrlr.position.maxScrollExtent - _scrollCtrlr.offset;
 
     final duration = math
         .min(
@@ -237,8 +241,8 @@ class InfiniteListViewState<PageKeyType, ItemType>
         )
         .toInt(); // ms
 
-    await scrollCtrlr.animateTo(
-      scrollCtrlr.position.maxScrollExtent,
+    await _scrollCtrlr.animateTo(
+      _scrollCtrlr.position.maxScrollExtent,
       duration: Duration(milliseconds: duration),
       curve: Curves.linear,
     );
@@ -293,7 +297,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
       key: _listViewKey,
       child: ListView.builder(
         shrinkWrap: true,
-        controller: scrollCtrlr,
+        controller: _scrollCtrlr,
         physics: _scrollPhysics,
         itemCount: _items.length,
         padding: EdgeInsets.fromLTRB(

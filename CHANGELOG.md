@@ -21,3 +21,6 @@
 
 ## 1.0.6
 - Removed `ScrollStateInfoType`
+
+## 1.0.7
+- Instead of exposing the scroll controller, I added `scrollToBottom` method.
