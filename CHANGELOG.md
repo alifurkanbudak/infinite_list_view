@@ -14,3 +14,7 @@
 
 ## 1.0.4
 - Added `updateItem` to `VisiblityController`
+
+## 1.0.5
+- Added `autoScrollStateChange` and it's logic state
+- Exposed scroll controller
