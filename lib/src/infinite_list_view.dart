@@ -11,12 +11,9 @@ import 'package:visibility_detector/visibility_detector.dart';
 import 'infinite_loader.dart';
 import 'infinite_scroll_physics.dart';
 
-class InfiniteListView<PageKeyType, ItemType, ScrollStateInfoType>
-    extends StatefulWidget {
+class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
   const InfiniteListView({
-    required GlobalKey<
-            InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>>
-        key,
+    required GlobalKey<InfiniteListViewState<PageKeyType, ItemType>> key,
     required this.initialPageKey,
     required this.requestPage,
     required this.itemBuilder,
@@ -76,12 +73,11 @@ class InfiniteListView<PageKeyType, ItemType, ScrollStateInfoType>
 
   @override
   State<InfiniteListView> createState() =>
-      InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>();
+      InfiniteListViewState<PageKeyType, ItemType>();
 }
 
-class InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>
-    extends State<
-        InfiniteListView<PageKeyType, ItemType, ScrollStateInfoType>> {
+class InfiniteListViewState<PageKeyType, ItemType>
+    extends State<InfiniteListView<PageKeyType, ItemType>> {
   late final _visibilityCtrlr = VisibilityController<ItemType>(
     widget.onVisibilityChange ?? (_) {},
   );

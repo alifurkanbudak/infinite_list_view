@@ -18,3 +18,6 @@
 ## 1.0.5
 - Added `autoScrollStateChange` and it's logic state
 - Exposed scroll controller
+
+## 1.0.6
+- Removed `ScrollStateInfoType`
