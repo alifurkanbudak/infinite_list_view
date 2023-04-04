@@ -24,4 +24,8 @@ class VisibilityController<ItemType> {
       onVisibilityChange(Set.from(_visibleItems));
     }
   }
+
+  void updateItem({required ItemType oldItem, required ItemType newItemm}) {
+    if (_visibleItems.remove(oldItem)) _visibleItems.add(newItemm);
+  }
 }

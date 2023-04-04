@@ -11,3 +11,6 @@
 
 ## 1.0.3
 - Added `updateItem` method
+
+## 1.0.4
+- Added `updateItem` to `VisiblityController`

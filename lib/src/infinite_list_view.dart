@@ -170,6 +170,11 @@ class InfiniteListViewState<PageKeyType, ItemType, ScrollStateInfoType>
 
   /// Optimally shouldn't cause size change
   void updateItem({required int index, required ItemType item}) {
+    _visibilityCtrlr.updateItem(
+      oldItem: _items[index],
+      newItemm: item,
+    );
+
     setState(() {
       _items = UnmodifiableListView([
         ..._items.sublist(0, index),
