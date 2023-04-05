@@ -10,7 +10,7 @@ import 'package:visibility_detector/visibility_detector.dart';
 
 import 'infinite_loader.dart';
 import 'infinite_scroll_physics.dart';
-import 'visibility_callbacks.dart';
+import 'visibility_config.dart';
 
 class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
   const InfiniteListView({
@@ -26,10 +26,9 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
     this.loaderSize = 20,
     this.androidLoaderStrokeWidth = 2,
     this.loaderSpacing = 4,
-    this.visibiltyCheckInterval = Duration.zero,
     this.androidLoaderColor,
     this.padding,
-    this.visibiltiyCallbacks,
+    this.visibiltiyConfig,
   }) : super(key: key);
 
   final PageKeyType initialPageKey;
@@ -46,9 +45,7 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
     int index,
   ) separatorBuilder;
 
-  final VisibilityCallbacks? visibiltiyCallbacks;
-
-  final Duration visibiltyCheckInterval;
+  final VisibilityConfig? visibiltiyConfig;
 
   final EdgeInsets? padding;
 
@@ -81,7 +78,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
     extends State<InfiniteListView<PageKeyType, ItemType>> {
   late final _visibilityCtrlr = VisibilityController(
     onVisibilityChange:
-        widget.visibiltiyCallbacks?.onVisibilityChange ?? (_, __) {},
+        widget.visibiltiyConfig?.onVisibilityChange ?? (_, __) {},
     isWidgetAlive: () => mounted,
   );
 
@@ -111,8 +108,10 @@ class InfiniteListViewState<PageKeyType, ItemType>
   void initState() {
     super.initState();
 
-    VisibilityDetectorController.instance.updateInterval =
-        widget.visibiltyCheckInterval;
+    if (widget.visibiltiyConfig != null) {
+      VisibilityDetectorController.instance.updateInterval =
+          widget.visibiltiyConfig!.visibiltyCheckInterval;
+    }
 
     _scrollCtrlr.addListener(_handleScrollChange);
     _requestPage();
@@ -261,7 +260,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
   Widget _itemBuilder(BuildContext context, int index) {
     Widget itemWidget = widget.itemBuilder(context, index);
 
-    if (widget.visibiltiyCallbacks?.shouldWatchVisiblity.call(index) == true) {
+    if (widget.visibiltiyConfig?.shouldWatchVisiblity.call(index) == true) {
       itemWidget = VisibilityDetector(
         key: ObjectKey(_items[index]),
         onVisibilityChanged: (info) => _visibilityCtrlr.updateItemVisibility(
