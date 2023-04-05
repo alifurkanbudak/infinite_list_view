@@ -10,6 +10,7 @@ import 'package:visibility_detector/visibility_detector.dart';
 
 import 'infinite_loader.dart';
 import 'infinite_scroll_physics.dart';
+import 'visibility_callbacks.dart';
 
 class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
   const InfiniteListView({
@@ -27,8 +28,7 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
     this.loaderSpacing = 4,
     this.androidLoaderColor,
     this.padding,
-    this.shouldWatchVisiblity,
-    this.onVisibilityChange,
+    this.visibiltiyCallbacks,
   }) : super(key: key);
 
   final PageKeyType initialPageKey;
@@ -45,9 +45,7 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
     int index,
   ) separatorBuilder;
 
-  final bool Function(int index)? shouldWatchVisiblity;
-
-  final void Function(Set<ItemType> visibleItems)? onVisibilityChange;
+  final VisibilityCallbacks? visibiltiyCallbacks;
 
   final EdgeInsets? padding;
 
@@ -78,8 +76,9 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
 
 class InfiniteListViewState<PageKeyType, ItemType>
     extends State<InfiniteListView<PageKeyType, ItemType>> {
-  late final _visibilityCtrlr = VisibilityController<ItemType>(
-    onVisibilityChange: widget.onVisibilityChange ?? (_) {},
+  late final _visibilityCtrlr = VisibilityController(
+    onVisibilityChange:
+        widget.visibiltiyCallbacks?.onVisibilityChange ?? (_, __) {},
     isWidgetAlive: () => mounted,
   );
 
@@ -128,6 +127,8 @@ class InfiniteListViewState<PageKeyType, ItemType>
     required bool isLastPage,
   }) {
     if (pageItems.isNotEmpty) _isPageAdded = true;
+    _visibilityCtrlr.pageAdded(pageItems.length);
+    _pageKey = pageKey;
 
     setState(() {
       _isLastPageFetched = isLastPage;
@@ -137,8 +138,6 @@ class InfiniteListViewState<PageKeyType, ItemType>
         ..._items,
       ]);
     });
-
-    _pageKey = pageKey;
 
     HapticFeedback.mediumImpact();
 
@@ -173,11 +172,6 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
   /// Optimally shouldn't cause size change
   void updateItem({required int index, required ItemType item}) {
-    _visibilityCtrlr.updateItem(
-      oldItem: _items[index],
-      newItemm: item,
-    );
-
     setState(() {
       _items = UnmodifiableListView([
         ..._items.sublist(0, index),
@@ -263,12 +257,12 @@ class InfiniteListViewState<PageKeyType, ItemType>
   Widget _itemBuilder(BuildContext context, int index) {
     Widget itemWidget = widget.itemBuilder(context, index);
 
-    if (widget.shouldWatchVisiblity?.call(index) == true) {
+    if (widget.visibiltiyCallbacks?.shouldWatchVisiblity.call(index) == true) {
       itemWidget = VisibilityDetector(
         key: ObjectKey(_items[index]),
         onVisibilityChanged: (info) => _visibilityCtrlr.updateItemVisibility(
           info: info,
-          item: _items[index],
+          index: index,
         ),
         child: itemWidget,
       );

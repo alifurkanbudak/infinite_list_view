@@ -33,3 +33,6 @@
 
 ## 1.1.0
 - `isWidgetAlive` fix
+
+## 1.1.1
+- Now using index to store visible items
