@@ -24,3 +24,6 @@
 
 ## 1.0.7
 - Instead of exposing the scroll controller, I added `scrollToBottom` method.
+
+## 1.0.8
+- `separatorBuilder` fix

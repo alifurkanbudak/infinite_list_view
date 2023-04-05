@@ -272,11 +272,14 @@ class InfiniteListViewState<PageKeyType, ItemType>
       );
     }
 
-    if (index < _items.length) {
+    if (index < _items.length - 1) {
       itemWidget = Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [itemWidget, widget.separatorBuilder(context, index)],
+        children: [
+          itemWidget,
+          widget.separatorBuilder(context, index),
+        ],
       );
     }
 
