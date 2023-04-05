@@ -26,6 +26,7 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
     this.loaderSize = 20,
     this.androidLoaderStrokeWidth = 2,
     this.loaderSpacing = 4,
+    this.visibiltyCheckInterval = Duration.zero,
     this.androidLoaderColor,
     this.padding,
     this.visibiltiyCallbacks,
@@ -46,6 +47,8 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
   ) separatorBuilder;
 
   final VisibilityCallbacks? visibiltiyCallbacks;
+
+  final Duration visibiltyCheckInterval;
 
   final EdgeInsets? padding;
 
@@ -109,7 +112,8 @@ class InfiniteListViewState<PageKeyType, ItemType>
     super.initState();
 
     VisibilityDetectorController.instance.updateInterval =
-        const Duration(milliseconds: 100);
+        widget.visibiltyCheckInterval;
+
     _scrollCtrlr.addListener(_handleScrollChange);
     _requestPage();
   }

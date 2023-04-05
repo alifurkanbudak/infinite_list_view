@@ -36,3 +36,6 @@
 
 ## 1.1.1
 - Now using index to store visible items
+
+## 1.1.2
+- Visibilty detector frequency updated 
