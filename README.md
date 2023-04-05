@@ -62,7 +62,7 @@ Using the `_listKey`, you can add pages and insert items to the list.
         shouldWatchVisiblity: (index) =>
             (_listKey.currentState!.items.length - index) % 5 == 0,
         onVisibilityChange: (visibleItems) {
-          debugPrint('onVisibilityChange: ${visibleItems.map((e) => e.id)}');
+          debugPrint('InfiniteListView. onVisibilityChange: ${visibleItems.map((e) => e.id)}');
         },
         padding: const EdgeInsets.all(16),
         androidLoaderColor: Colors.pink,

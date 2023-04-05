@@ -30,3 +30,6 @@
 
 ## 1.0.9
 - Added `isWidgetAlive` check to visibility controller
+
+## 1.1.0
+- `isWidgetAlive` fix

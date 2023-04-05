@@ -21,14 +21,18 @@ class VisibilityController<ItemType> {
 
     if (wasVisible && !isVisible) {
       _visibleItems.remove(item);
-      debugPrint('updateItemVisibility. _visibleItems: $_visibleItems');
-      onVisibilityChange(Set.from(_visibleItems));
+      debugPrint(
+          'InfiniteListView. updateItemVisibility. _visibleItems: $_visibleItems');
+
+      if (isWidgetAlive()) onVisibilityChange(Set.from(_visibleItems));
     }
 
     if (!wasVisible && isVisible) {
       _visibleItems.add(item);
-      debugPrint('updateItemVisibility. _visibleItems: $_visibleItems');
-      onVisibilityChange(Set.from(_visibleItems));
+      debugPrint(
+          'InfiniteListView. updateItemVisibility. _visibleItems: $_visibleItems');
+
+      if (isWidgetAlive()) onVisibilityChange(Set.from(_visibleItems));
     }
   }
 

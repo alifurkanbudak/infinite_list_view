@@ -25,7 +25,7 @@ class InfiniteScrollPhysics extends ScrollPhysics {
     required double velocity,
   }) {
     debugPrint(
-      'adjustPositionForNewDimensions. oldPosition: $oldPosition, newPosition: $newPosition',
+      'InfiniteListView. adjustPositionForNewDimensions. oldPosition: $oldPosition, newPosition: $newPosition',
     );
 
     final position = super.adjustPositionForNewDimensions(
@@ -36,7 +36,8 @@ class InfiniteScrollPhysics extends ScrollPhysics {
     );
 
     if (!onListSizeChanged()) {
-      debugPrint('adjustPositionForNewDimensions. no need to maintain scroll');
+      debugPrint(
+          'InfiniteListView. adjustPositionForNewDimensions. no need to maintain scroll');
       return position;
     }
 
@@ -44,12 +45,13 @@ class InfiniteScrollPhysics extends ScrollPhysics {
         (oldPosition.extentBefore + oldPosition.extentAfter == 0) &&
             (newPosition.extentBefore + newPosition.extentAfter > 0);
     if (isFirstScrollableState) {
-      debugPrint('adjustPositionForNewDimensions. isFirstScrollableState');
+      debugPrint(
+          'InfiniteListView. adjustPositionForNewDimensions. isFirstScrollableState');
       return newPosition.maxScrollExtent;
     }
 
     final diff = newPosition.maxScrollExtent - oldPosition.maxScrollExtent;
-    debugPrint('adjustPositionForNewDimensions. diff: $diff');
+    debugPrint('InfiniteListView. adjustPositionForNewDimensions. diff: $diff');
 
     return position + diff;
   }
