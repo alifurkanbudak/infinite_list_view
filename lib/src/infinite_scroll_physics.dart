@@ -24,6 +24,10 @@ class InfiniteScrollPhysics extends ScrollPhysics {
     required bool isScrolling,
     required double velocity,
   }) {
+    debugPrint(
+      'adjustPositionForNewDimensions. oldPosition: $oldPosition, newPosition: $newPosition',
+    );
+
     final position = super.adjustPositionForNewDimensions(
       oldPosition: oldPosition,
       newPosition: newPosition,
@@ -31,14 +35,21 @@ class InfiniteScrollPhysics extends ScrollPhysics {
       velocity: velocity,
     );
 
-    if (!onListSizeChanged()) return position;
+    if (!onListSizeChanged()) {
+      debugPrint('adjustPositionForNewDimensions. no need to maintain scroll');
+      return position;
+    }
 
     bool isFirstScrollableState =
         (oldPosition.extentBefore + oldPosition.extentAfter == 0) &&
             (newPosition.extentBefore + newPosition.extentAfter > 0);
-    if (isFirstScrollableState) return newPosition.maxScrollExtent;
+    if (isFirstScrollableState) {
+      debugPrint('adjustPositionForNewDimensions. isFirstScrollableState');
+      return newPosition.maxScrollExtent;
+    }
 
     final diff = newPosition.maxScrollExtent - oldPosition.maxScrollExtent;
+    debugPrint('adjustPositionForNewDimensions. diff: $diff');
 
     return position + diff;
   }

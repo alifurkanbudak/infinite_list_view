@@ -27,3 +27,6 @@
 
 ## 1.0.8
 - `separatorBuilder` fix
+
+## 1.0.9
+- Added `isWidgetAlive` check to visibility controller

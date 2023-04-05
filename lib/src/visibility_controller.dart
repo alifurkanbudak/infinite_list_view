@@ -1,11 +1,16 @@
+import 'package:flutter/material.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class VisibilityController<ItemType> {
   final void Function(Set<ItemType> visibleItems) onVisibilityChange;
+  final bool Function() isWidgetAlive;
 
   final _visibleItems = <ItemType>{};
 
-  VisibilityController(this.onVisibilityChange);
+  VisibilityController({
+    required this.onVisibilityChange,
+    required this.isWidgetAlive,
+  });
 
   void updateItemVisibility({
     required VisibilityInfo info,
@@ -16,11 +21,13 @@ class VisibilityController<ItemType> {
 
     if (wasVisible && !isVisible) {
       _visibleItems.remove(item);
+      debugPrint('updateItemVisibility. _visibleItems: $_visibleItems');
       onVisibilityChange(Set.from(_visibleItems));
     }
 
     if (!wasVisible && isVisible) {
       _visibleItems.add(item);
+      debugPrint('updateItemVisibility. _visibleItems: $_visibleItems');
       onVisibilityChange(Set.from(_visibleItems));
     }
   }

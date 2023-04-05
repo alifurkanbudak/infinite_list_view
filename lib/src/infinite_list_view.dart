@@ -79,7 +79,8 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
 class InfiniteListViewState<PageKeyType, ItemType>
     extends State<InfiniteListView<PageKeyType, ItemType>> {
   late final _visibilityCtrlr = VisibilityController<ItemType>(
-    widget.onVisibilityChange ?? (_) {},
+    onVisibilityChange: widget.onVisibilityChange ?? (_) {},
+    isWidgetAlive: () => mounted,
   );
 
   late PageKeyType _pageKey = widget.initialPageKey;
@@ -126,6 +127,8 @@ class InfiniteListViewState<PageKeyType, ItemType>
     required PageKeyType pageKey,
     required bool isLastPage,
   }) {
+    if (pageItems.isNotEmpty) _isPageAdded = true;
+
     setState(() {
       _isLastPageFetched = isLastPage;
       _isFetching = false;
@@ -135,7 +138,6 @@ class InfiniteListViewState<PageKeyType, ItemType>
       ]);
     });
 
-    _isPageAdded = true;
     _pageKey = pageKey;
 
     HapticFeedback.mediumImpact();
