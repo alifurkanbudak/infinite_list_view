@@ -303,7 +303,6 @@ class InfiniteListViewState<PageKeyType, ItemType>
     Widget listView = KeyedSubtree(
       key: _listViewKey,
       child: ListView.builder(
-        shrinkWrap: true,
         controller: _scrollCtrlr,
         physics: _scrollPhysics,
         itemCount: _items.length,
