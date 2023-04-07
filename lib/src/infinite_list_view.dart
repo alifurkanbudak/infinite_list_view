@@ -287,6 +287,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('InfiniteListView. build...');
     // Give space for the page loader widget
     final listTopPadding = _isLastPageFetched
         ? widget.padding?.top ?? 0
