@@ -129,6 +129,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
     required PageKeyType pageKey,
     required bool isLastPage,
   }) {
+    debugPrint('InfiniteListView. addPage...');
     if (pageItems.isNotEmpty) _isPageAdded = true;
     _visibilityCtrlr.pageAdded(pageItems.length);
     _pageKey = pageKey;
@@ -152,6 +153,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
   /// Returns true if the list auto scrolled to view new messages
   bool addNewItems({required List<ItemType> items}) {
+    debugPrint('InfiniteListView. addNewItems...');
     final offsetDiff =
         _scrollCtrlr.position.maxScrollExtent - _scrollCtrlr.offset;
     final autoScroll =
@@ -175,6 +177,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
   /// Optimally shouldn't cause size change
   void updateItem({required int index, required ItemType item}) {
+    debugPrint('InfiniteListView. updateItem...');
     setState(() {
       _items = UnmodifiableListView([
         ..._items.sublist(0, index),
@@ -185,6 +188,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
   }
 
   void onError(Object error) {
+    debugPrint('InfiniteListView. onError...');
     setState(() {
       _isFetching = false;
     });
