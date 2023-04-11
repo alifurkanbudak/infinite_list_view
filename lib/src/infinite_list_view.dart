@@ -95,7 +95,11 @@ class InfiniteListViewState<PageKeyType, ItemType>
   // Used for comparing whether top item changed
   bool _isPageAdded = false;
 
-  final _listViewKey = GlobalKey();
+  // Sliverlist has at least the size of a screen
+  final bool _renderNewItemsInList = false;
+  final GlobalKey _newItemsColumnKey = GlobalKey();
+
+  final _sliverCenterKey = GlobalKey();
   final _loaderKey = GlobalKey<InfiniteLoaderState>();
 
   late final _scrollPhysics = InfiniteScrollPhysics(
@@ -307,18 +311,25 @@ class InfiniteListViewState<PageKeyType, ItemType>
     return itemWidget;
   }
 
+  // void _checkNewItemsSize(BuildContext context) {
+  //   final maxSize = MediaQuery.of(context).size.height;
+
+  //   if(_newItemsColumnKey.currentContext.size.height < )
+  // }
+
   @override
   Widget build(BuildContext context) {
     debugPrint('InfiniteListView. build...');
+    // if (!_renderNewItemsInList) {
+    //   WidgetsBinding.instance
+    //       .addPostFrameCallback((_) => _checkNewItemsSize(context));
+    // }
 
     Widget listView = CustomScrollView(
-      center: _listViewKey,
+      center: _sliverCenterKey,
       controller: _scrollCtrlr,
       physics: _scrollPhysics,
       slivers: <Widget>[
-        SliverOverlapInjector(
-          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-        ),
         SliverList(
           delegate: SliverChildBuilderDelegate(
             childCount: _pageItemsLength,
@@ -328,28 +339,37 @@ class InfiniteListViewState<PageKeyType, ItemType>
             ),
           ),
         ),
-        SliverList(
-          key: _listViewKey,
-          delegate: SliverChildBuilderDelegate(
-            childCount: _items.length - _pageItemsLength,
-            (context, index) => _itemBuilder(
-              context,
-              _pageItemsLength + index,
+        SliverToBoxAdapter(
+          key: _sliverCenterKey,
+          child: const SizedBox(height: 0, width: 0),
+        ),
+        // if (_renderNewItemsInList)
+        SliverToBoxAdapter(
+          child: Column(
+            key: _newItemsColumnKey,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: List<Widget>.generate(
+              _items.length - _pageItemsLength,
+              (index) => _itemBuilder(
+                context,
+                _pageItemsLength + index,
+              ),
             ),
           ),
-        ),
+        )
+        // else
+        //   SliverList(
+        //     delegate: SliverChildBuilderDelegate(
+        //       childCount: _items.length - _pageItemsLength,
+        //       (context, index) => _itemBuilder(
+        //         context,
+        //         _pageItemsLength + index,
+        //       ),
+        //     ),
+        //   ),
       ],
     );
-
-    // Widget listView = KeyedSubtree(
-    //   key: _listViewKey,
-    //   child: ListView.builder(
-    //     controller: _scrollCtrlr,
-    //     physics: _scrollPhysics,
-    //     itemCount: _items.length,
-    //     itemBuilder: _itemBuilder,
-    //   ),
-    // );
 
     return Stack(
       alignment: Alignment.topCenter,
