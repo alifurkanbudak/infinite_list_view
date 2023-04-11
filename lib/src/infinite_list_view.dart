@@ -316,6 +316,9 @@ class InfiniteListViewState<PageKeyType, ItemType>
       controller: _scrollCtrlr,
       physics: _scrollPhysics,
       slivers: <Widget>[
+        SliverOverlapInjector(
+          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+        ),
         SliverList(
           delegate: SliverChildBuilderDelegate(
             childCount: _pageItemsLength,
