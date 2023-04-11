@@ -26,8 +26,8 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
     this.loaderSize = 20,
     this.androidLoaderStrokeWidth = 2,
     this.loaderSpacing = 4,
+    this.padding = EdgeInsets.zero,
     this.androidLoaderColor,
-    this.padding,
     this.visibiltiyConfig,
   }) : super(key: key);
 
@@ -47,7 +47,7 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
 
   final VisibilityConfig? visibiltiyConfig;
 
-  final EdgeInsets? padding;
+  final EdgeInsets padding;
 
   /// In pixels
   final double autoScrollThreshold;
@@ -86,6 +86,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
   UnmodifiableListView<ItemType> get items => _items;
   UnmodifiableListView<ItemType> _items = UnmodifiableListView([]);
+  int _pageItemsLength = 0;
 
   bool _isFetching = false;
   bool _isLastPageFetched = false;
@@ -133,6 +134,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
     if (pageItems.isNotEmpty) _isPageAdded = true;
     _visibilityCtrlr.pageAdded(pageItems.length);
     _pageKey = pageKey;
+    _pageItemsLength += pageItems.length;
 
     setState(() {
       _isLastPageFetched = isLastPage;
@@ -261,8 +263,23 @@ class InfiniteListViewState<PageKeyType, ItemType>
     return false;
   }
 
+  double get _listTopPadding => _isLastPageFetched
+      ? widget.padding.top
+      : math.max(
+          widget.loaderSize + widget.loaderSpacing * 2,
+          widget.padding.top,
+        );
+
   Widget _itemBuilder(BuildContext context, int index) {
-    Widget itemWidget = widget.itemBuilder(context, index);
+    Widget itemWidget = Padding(
+      padding: EdgeInsets.fromLTRB(
+        widget.padding.left,
+        index == 0 ? _listTopPadding : 0,
+        widget.padding.right,
+        index == _items.length - 1 ? widget.padding.bottom : 0,
+      ),
+      child: widget.itemBuilder(context, index),
+    );
 
     if (widget.visibiltiyConfig?.shouldWatchVisiblity.call(index) == true) {
       itemWidget = VisibilityDetector(
@@ -292,29 +309,42 @@ class InfiniteListViewState<PageKeyType, ItemType>
   @override
   Widget build(BuildContext context) {
     debugPrint('InfiniteListView. build...');
-    // Give space for the page loader widget
-    final listTopPadding = _isLastPageFetched
-        ? widget.padding?.top ?? 0
-        : math.max(
-            widget.loaderSize + widget.loaderSpacing * 2,
-            widget.padding?.top ?? 0,
-          );
 
-    Widget listView = KeyedSubtree(
-      key: _listViewKey,
-      child: ListView.builder(
-        controller: _scrollCtrlr,
-        physics: _scrollPhysics,
-        itemCount: _items.length,
-        padding: EdgeInsets.fromLTRB(
-          widget.padding?.left ?? 0,
-          listTopPadding,
-          widget.padding?.right ?? 0,
-          widget.padding?.bottom ?? 0,
+    Widget listView = CustomScrollView(
+      center: _listViewKey,
+      controller: _scrollCtrlr,
+      slivers: <Widget>[
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            childCount: _pageItemsLength,
+            (context, index) => _itemBuilder(
+              context,
+              _pageItemsLength - index - 1,
+            ),
+          ),
         ),
-        itemBuilder: _itemBuilder,
-      ),
+        SliverList(
+          key: _listViewKey,
+          delegate: SliverChildBuilderDelegate(
+            childCount: _items.length - _pageItemsLength,
+            (context, index) => _itemBuilder(
+              context,
+              _pageItemsLength + index,
+            ),
+          ),
+        ),
+      ],
     );
+
+    // Widget listView = KeyedSubtree(
+    //   key: _listViewKey,
+    //   child: ListView.builder(
+    //     controller: _scrollCtrlr,
+    //     physics: _scrollPhysics,
+    //     itemCount: _items.length,
+    //     itemBuilder: _itemBuilder,
+    //   ),
+    // );
 
     return Stack(
       alignment: Alignment.topCenter,
