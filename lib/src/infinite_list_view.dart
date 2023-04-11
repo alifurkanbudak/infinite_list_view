@@ -140,7 +140,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_autoScrollCalls > 0) _autoScrollToBottom();
-      _handleScrollChange();
+      // _handleScrollChange();
     });
   }
 
@@ -309,6 +309,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
           ),
         ),
         SliverPadding(
+          key: _sliverCenterKey,
           padding: EdgeInsets.fromLTRB(
             widget.padding.left,
             0,
@@ -316,7 +317,6 @@ class InfiniteListViewState<PageKeyType, ItemType>
             widget.padding.bottom,
           ),
           sliver: SliverList(
-            key: _sliverCenterKey,
             delegate: SliverChildBuilderDelegate(
               childCount: _items.length - _pageItemsLength,
               (context, index) => _itemBuilder(
