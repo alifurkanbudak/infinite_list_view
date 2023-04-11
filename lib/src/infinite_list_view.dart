@@ -133,7 +133,6 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_autoScrollCalls > 0) _autoScrollToBottom();
-      // _handleScrollChange();
     });
   }
 
@@ -189,16 +188,9 @@ class InfiniteListViewState<PageKeyType, ItemType>
   }
 
   void _handleScrollChange() {
-    final offset = _scrollCtrlr.offset;
     // debugPrint('InfiniteListView. _handleScrollChange offset: $offset');
 
-    _loaderKey.currentState!.updateOffset(offset);
-
-    // Page request check
-    bool requestPage = offset <= widget.pageRequestThreshold;
-    if (requestPage) _requestPage();
-
-    _autoScrollRegionUpdate(offset);
+    _autoScrollRegionUpdate(_scrollCtrlr.offset);
   }
 
   void _autoScrollRegionUpdate(double offset) {
