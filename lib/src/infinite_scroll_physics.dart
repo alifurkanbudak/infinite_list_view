@@ -50,10 +50,6 @@ class InfiniteScrollPhysics extends ScrollPhysics {
       return newPosition.maxScrollExtent;
     }
 
-    final diff = newPosition.maxScrollExtent - oldPosition.maxScrollExtent;
-    debugPrint(
-        'InfiniteListView. adjustPositionForNewDimensions. diff: $diff. position: $position. pos+diff: ${position + diff}');
-
-    return position + diff;
+    return position;
   }
 }
