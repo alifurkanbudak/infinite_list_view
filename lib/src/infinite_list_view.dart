@@ -9,7 +9,6 @@ import 'package:infinite_list_view/src/visibility_controller.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 import 'infinite_loader.dart';
-import 'visibility_config.dart';
 
 class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
   const InfiniteListView({
@@ -27,7 +26,7 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
     this.loaderSpacing = 4,
     this.padding = EdgeInsets.zero,
     this.androidLoaderColor,
-    this.visibiltiyConfig,
+    this.onVisibilityChange,
   }) : super(key: key);
 
   final PageKeyType initialPageKey;
@@ -44,7 +43,7 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
     int index,
   ) separatorBuilder;
 
-  final VisibilityConfig? visibiltiyConfig;
+  final void Function(int minInd, int maxInd)? onVisibilityChange;
 
   final EdgeInsets padding;
 
@@ -76,8 +75,7 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
 class InfiniteListViewState<PageKeyType, ItemType>
     extends State<InfiniteListView<PageKeyType, ItemType>> {
   late final _visibilityCtrlr = VisibilityController(
-    onVisibilityChange:
-        widget.visibiltiyConfig?.onVisibilityChange ?? (_, __) {},
+    onVisibilityChange: _onVisibilityChange,
     isWidgetAlive: () => mounted,
   );
 
@@ -100,11 +98,6 @@ class InfiniteListViewState<PageKeyType, ItemType>
   @override
   void initState() {
     super.initState();
-
-    if (widget.visibiltiyConfig != null) {
-      VisibilityDetectorController.instance.updateInterval =
-          widget.visibiltiyConfig!.visibiltyCheckInterval;
-    }
 
     _scrollCtrlr.addListener(_handleScrollChange);
     _requestPage();
@@ -173,9 +166,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
     debugPrint('InfiniteListView. updateItem...');
     setState(() {
       _items = UnmodifiableListView([
-        ..._items.sublist(0, index),
-        item,
-        ..._items.sublist(index + 1),
+        for (int i = 0; i < _items.length; i++) i == index ? item : _items[i]
       ]);
     });
   }
@@ -191,6 +182,12 @@ class InfiniteListViewState<PageKeyType, ItemType>
     _autoScrollToBottom();
   }
 
+  void _onVisibilityChange(int minInd, int maxInd) {
+    widget.onVisibilityChange?.call(minInd, maxInd);
+
+    if (minInd < 4) _requestPage();
+  }
+
   void _handleScrollChange() {
     final offset = _scrollCtrlr.offset;
     // debugPrint('InfiniteListView. _handleScrollChange offset: $offset');
@@ -201,7 +198,10 @@ class InfiniteListViewState<PageKeyType, ItemType>
     bool requestPage = offset <= widget.pageRequestThreshold;
     if (requestPage) _requestPage();
 
-    // Auto scroll state check
+    _autoScrollRegionUpdate(offset);
+  }
+
+  void _autoScrollRegionUpdate(double offset) {
     final newAutoScrollState = _scrollCtrlr.position.maxScrollExtent - offset <=
         widget.autoScrollThreshold;
     final oldAutoScrollState = _inAutoScrollRegion;
@@ -249,18 +249,14 @@ class InfiniteListViewState<PageKeyType, ItemType>
   }
 
   Widget _itemBuilder(BuildContext context, int index) {
-    Widget itemWidget = widget.itemBuilder(context, index);
-
-    if (widget.visibiltiyConfig?.shouldWatchVisiblity.call(index) == true) {
-      itemWidget = VisibilityDetector(
-        key: ObjectKey(_items[index]),
-        onVisibilityChanged: (info) => _visibilityCtrlr.updateItemVisibility(
-          info: info,
-          index: index,
-        ),
-        child: itemWidget,
-      );
-    }
+    Widget itemWidget = VisibilityDetector(
+      key: ObjectKey(_items[index]),
+      onVisibilityChanged: (info) => _visibilityCtrlr.updateItemVisibility(
+        info: info,
+        index: index,
+      ),
+      child: widget.itemBuilder(context, index),
+    );
 
     if (index < _items.length - 1) {
       itemWidget = Column(
@@ -308,11 +304,8 @@ class InfiniteListViewState<PageKeyType, ItemType>
             ),
           ),
         ),
-        SliverToBoxAdapter(
-          key: _sliverCenterKey,
-          child: const SizedBox(),
-        ),
         SliverPadding(
+          key: _sliverCenterKey,
           padding: EdgeInsets.fromLTRB(
             widget.padding.left,
             0,

@@ -49,7 +49,7 @@ class VisibilityController {
     if (isWidgetAlive()) onVisibilityChange(minInd.toInt(), maxInd.toInt());
 
     debugPrint(
-      'InfiniteListView. updateItemVisibility. _visibleInds: $_visibleInds',
+      'InfiniteListView. updateItemVisibility. $minInd...$maxInd',
     );
   }
 }
