@@ -240,6 +240,13 @@ class InfiniteListViewState<PageKeyType, ItemType>
     return false;
   }
 
+  double get _listTopPadding => _isLastPageFetched
+      ? widget.padding.top
+      : math.max(
+          widget.loaderSize + widget.loaderSpacing * 2,
+          widget.padding.top,
+        );
+
   Widget _itemBuilder(BuildContext context, int index) {
     Widget itemWidget = VisibilityDetector(
       key: ObjectKey(_items[index]),
@@ -255,7 +262,10 @@ class InfiniteListViewState<PageKeyType, ItemType>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (index == 0) SizedBox(height: _listTopPadding),
           itemWidget,
+          if (index == _items.length - 1)
+            SizedBox(height: widget.padding.bottom),
           widget.separatorBuilder(context, index),
         ],
       );
@@ -267,12 +277,6 @@ class InfiniteListViewState<PageKeyType, ItemType>
   @override
   Widget build(BuildContext context) {
     debugPrint('InfiniteListView. build...');
-    double listTopPadding = _isLastPageFetched
-        ? widget.padding.top
-        : math.max(
-            widget.loaderSize + widget.loaderSpacing * 2,
-            widget.padding.top,
-          );
 
     Widget listView = CustomScrollView(
       anchor: 1,
@@ -280,11 +284,9 @@ class InfiniteListViewState<PageKeyType, ItemType>
       controller: _scrollCtrlr,
       slivers: <Widget>[
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(
-            widget.padding.left,
-            listTopPadding,
-            widget.padding.right,
-            0,
+          padding: EdgeInsets.only(
+            left: widget.padding.left,
+            right: widget.padding.right,
           ),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
@@ -298,11 +300,9 @@ class InfiniteListViewState<PageKeyType, ItemType>
         ),
         SliverPadding(
           key: _sliverCenterKey,
-          padding: EdgeInsets.fromLTRB(
-            widget.padding.left,
-            0,
-            widget.padding.right,
-            widget.padding.bottom,
+          padding: EdgeInsets.only(
+            left: widget.padding.left,
+            right: widget.padding.right,
           ),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
