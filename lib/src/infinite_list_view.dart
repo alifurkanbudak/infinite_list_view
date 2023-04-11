@@ -308,8 +308,11 @@ class InfiniteListViewState<PageKeyType, ItemType>
             ),
           ),
         ),
-        SliverPadding(
+        SliverToBoxAdapter(
           key: _sliverCenterKey,
+          child: const SizedBox(),
+        ),
+        SliverPadding(
           padding: EdgeInsets.fromLTRB(
             widget.padding.left,
             0,
