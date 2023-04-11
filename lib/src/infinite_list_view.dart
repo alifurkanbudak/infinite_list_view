@@ -209,6 +209,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
   void _handleScrollChange() {
     final offset = _scrollCtrlr.offset;
+    debugPrint('InfiniteListView. _handleScrollChange offset: $offset');
 
     _loaderKey.currentState!.updateOffset(offset);
 
@@ -313,6 +314,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
     Widget listView = CustomScrollView(
       center: _listViewKey,
       controller: _scrollCtrlr,
+      shrinkWrap: true,
       slivers: <Widget>[
         SliverList(
           delegate: SliverChildBuilderDelegate(
