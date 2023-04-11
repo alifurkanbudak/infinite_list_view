@@ -9,7 +9,6 @@ import 'package:infinite_list_view/src/visibility_controller.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 import 'infinite_loader.dart';
-import 'infinite_scroll_physics.dart';
 import 'visibility_config.dart';
 
 class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
@@ -90,23 +89,12 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
   bool _isFetching = false;
   bool _isLastPageFetched = false;
-  int _autoScrollCalls = 0;
-
-  // Used for comparing whether top item changed
-  bool _isPageAdded = false;
-
-  // Sliverlist has at least the size of a screen
-  final bool _renderNewItemsInList = false;
-  final GlobalKey _newItemsColumnKey = GlobalKey();
 
   final _sliverCenterKey = GlobalKey();
   final _loaderKey = GlobalKey<InfiniteLoaderState>();
 
-  late final _scrollPhysics = InfiniteScrollPhysics(
-    onListSizeChanged: _onListSizeChanged,
-  );
   final _scrollCtrlr = ScrollController();
-
+  int _autoScrollCalls = 0;
   bool _inAutoScrollRegion = true;
 
   @override
@@ -135,7 +123,6 @@ class InfiniteListViewState<PageKeyType, ItemType>
     required bool isLastPage,
   }) {
     debugPrint('InfiniteListView. addPage...');
-    if (pageItems.isNotEmpty) _isPageAdded = true;
     _visibilityCtrlr.pageAdded(pageItems.length);
     _pageKey = pageKey;
     _pageItemsLength += pageItems.length;
@@ -204,13 +191,6 @@ class InfiniteListViewState<PageKeyType, ItemType>
     _autoScrollToBottom();
   }
 
-  bool _onListSizeChanged() {
-    final maintainScroll = _isPageAdded;
-    _isPageAdded = false;
-
-    return maintainScroll;
-  }
-
   void _handleScrollChange() {
     final offset = _scrollCtrlr.offset;
     // debugPrint('InfiniteListView. _handleScrollChange offset: $offset');
@@ -268,23 +248,8 @@ class InfiniteListViewState<PageKeyType, ItemType>
     return false;
   }
 
-  double get _listTopPadding => _isLastPageFetched
-      ? widget.padding.top
-      : math.max(
-          widget.loaderSize + widget.loaderSpacing * 2,
-          widget.padding.top,
-        );
-
   Widget _itemBuilder(BuildContext context, int index) {
-    Widget itemWidget = Padding(
-      padding: EdgeInsets.fromLTRB(
-        widget.padding.left,
-        index == 0 ? _listTopPadding : 0,
-        widget.padding.right,
-        index == _items.length - 1 ? widget.padding.bottom : 0,
-      ),
-      child: widget.itemBuilder(context, index),
-    );
+    Widget itemWidget = widget.itemBuilder(context, index);
 
     if (widget.visibiltiyConfig?.shouldWatchVisiblity.call(index) == true) {
       itemWidget = VisibilityDetector(
@@ -311,64 +276,56 @@ class InfiniteListViewState<PageKeyType, ItemType>
     return itemWidget;
   }
 
-  // void _checkNewItemsSize(BuildContext context) {
-  //   final maxSize = MediaQuery.of(context).size.height;
-
-  //   if(_newItemsColumnKey.currentContext.size.height < )
-  // }
-
   @override
   Widget build(BuildContext context) {
     debugPrint('InfiniteListView. build...');
-    // if (!_renderNewItemsInList) {
-    //   WidgetsBinding.instance
-    //       .addPostFrameCallback((_) => _checkNewItemsSize(context));
-    // }
+    double listTopPadding = _isLastPageFetched
+        ? widget.padding.top
+        : math.max(
+            widget.loaderSize + widget.loaderSpacing * 2,
+            widget.padding.top,
+          );
 
     Widget listView = CustomScrollView(
       anchor: 1,
       center: _sliverCenterKey,
       controller: _scrollCtrlr,
-      physics: _scrollPhysics,
       slivers: <Widget>[
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            childCount: _pageItemsLength,
-            (context, index) => _itemBuilder(
-              context,
-              _pageItemsLength - index - 1,
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            widget.padding.left,
+            listTopPadding,
+            widget.padding.right,
+            0,
+          ),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              childCount: _pageItemsLength,
+              (context, index) => _itemBuilder(
+                context,
+                _pageItemsLength - index - 1,
+              ),
             ),
           ),
         ),
-        SliverToBoxAdapter(
-          key: _sliverCenterKey,
-          child: const SizedBox(height: 0, width: 0),
-        ),
-        // if (_renderNewItemsInList)
-        SliverToBoxAdapter(
-          child: Column(
-            key: _newItemsColumnKey,
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: List<Widget>.generate(
-              _items.length - _pageItemsLength,
-              (index) => _itemBuilder(
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            widget.padding.left,
+            0,
+            widget.padding.right,
+            widget.padding.bottom,
+          ),
+          sliver: SliverList(
+            key: _sliverCenterKey,
+            delegate: SliverChildBuilderDelegate(
+              childCount: _items.length - _pageItemsLength,
+              (context, index) => _itemBuilder(
                 context,
                 _pageItemsLength + index,
               ),
             ),
           ),
-        )
-        // else
-        //   SliverList(
-        //     delegate: SliverChildBuilderDelegate(
-        //       childCount: _items.length - _pageItemsLength,
-        //       (context, index) => _itemBuilder(
-        //         context,
-        //         _pageItemsLength + index,
-        //       ),
-        //     ),
-        //   ),
+        ),
       ],
     );
 
