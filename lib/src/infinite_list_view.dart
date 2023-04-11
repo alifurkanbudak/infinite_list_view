@@ -326,6 +326,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
     // }
 
     Widget listView = CustomScrollView(
+      anchor: 1,
       center: _sliverCenterKey,
       controller: _scrollCtrlr,
       physics: _scrollPhysics,
