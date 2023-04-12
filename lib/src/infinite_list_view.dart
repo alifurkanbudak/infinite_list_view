@@ -83,12 +83,12 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
   UnmodifiableListView<ItemType> get items => _items;
   UnmodifiableListView<ItemType> _items = UnmodifiableListView([]);
-  int _pageItemsLength = 0;
+
+  static const _isReverse = true;
 
   bool _isFetching = false;
   bool _isLastPageFetched = false;
 
-  final _sliverCenterKey = GlobalKey();
   final _loaderKey = GlobalKey<InfiniteLoaderState>();
 
   final _scrollCtrlr = ScrollController();
@@ -118,7 +118,6 @@ class InfiniteListViewState<PageKeyType, ItemType>
     debugPrint('InfiniteListView. addPage...');
     _visibilityCtrlr.pageAdded(pageItems.length);
     _pageKey = pageKey;
-    _pageItemsLength += pageItems.length;
 
     setState(() {
       _isLastPageFetched = isLastPage;
@@ -139,10 +138,9 @@ class InfiniteListViewState<PageKeyType, ItemType>
   /// Returns true if the list auto scrolled to view new messages
   bool addNewItems({required List<ItemType> items}) {
     debugPrint('InfiniteListView. addNewItems...');
-    final offsetDiff =
-        _scrollCtrlr.position.maxScrollExtent - _scrollCtrlr.offset;
-    final autoScroll =
-        _autoScrollCalls > 0 || offsetDiff <= widget.autoScrollThreshold;
+
+    final autoScroll = _autoScrollCalls > 0 ||
+        _scrollDistToBottom() <= widget.autoScrollThreshold;
 
     setState(() {
       _items = UnmodifiableListView([
@@ -190,12 +188,12 @@ class InfiniteListViewState<PageKeyType, ItemType>
   void _handleScrollChange() {
     // debugPrint('InfiniteListView. _handleScrollChange offset: $offset');
 
-    _autoScrollRegionUpdate(_scrollCtrlr.offset);
+    _autoScrollRegionUpdate();
   }
 
-  void _autoScrollRegionUpdate(double offset) {
-    final newAutoScrollState = _scrollCtrlr.position.maxScrollExtent - offset <=
-        widget.autoScrollThreshold;
+  void _autoScrollRegionUpdate() {
+    final newAutoScrollState =
+        _scrollDistToBottom() <= widget.autoScrollThreshold;
     final oldAutoScrollState = _inAutoScrollRegion;
 
     _inAutoScrollRegion = newAutoScrollState;
@@ -214,23 +212,29 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
   Future<void> _autoScrollToBottom() async {
     _autoScrollCalls += 1;
-    final diff = _scrollCtrlr.position.maxScrollExtent - _scrollCtrlr.offset;
 
     final duration = math
         .min(
           widget.maxAutoScrollDuration,
-          math.max(0, diff * 2.5),
+          math.max(0, _scrollDistToBottom() * 2.5),
         )
         .toInt(); // ms
 
     await _scrollCtrlr.animateTo(
-      _scrollCtrlr.position.maxScrollExtent,
+      _bottomScrollOffset(),
       duration: Duration(milliseconds: duration),
       curve: Curves.linear,
     );
 
     _autoScrollCalls = math.max(0, _autoScrollCalls - 1);
   }
+
+  double _bottomScrollOffset() =>
+      _isReverse ? 0 : _scrollCtrlr.position.maxScrollExtent;
+
+  double _scrollDistToBottom() => _isReverse
+      ? _scrollCtrlr.offset
+      : _scrollCtrlr.position.maxScrollExtent - _scrollCtrlr.offset;
 
   bool _onUserScrollNotification(UserScrollNotification notification) {
     if (notification.direction == ScrollDirection.forward) {
@@ -240,33 +244,25 @@ class InfiniteListViewState<PageKeyType, ItemType>
     return false;
   }
 
-  double get _listTopPadding => _isLastPageFetched
-      ? widget.padding.top
-      : math.max(
-          widget.loaderSize + widget.loaderSpacing * 2,
-          widget.padding.top,
-        );
-
   Widget _itemBuilder(BuildContext context, int index) {
+    final adjustedInd = _isReverse ? _items.length - index - 1 : index;
+
     Widget itemWidget = VisibilityDetector(
-      key: ObjectKey(_items[index]),
+      key: ObjectKey(_items[adjustedInd]),
       onVisibilityChanged: (info) => _visibilityCtrlr.updateItemVisibility(
         info: info,
-        index: index,
+        index: adjustedInd,
       ),
-      child: widget.itemBuilder(context, index),
+      child: widget.itemBuilder(context, adjustedInd),
     );
 
-    if (index < _items.length - 1) {
+    if (adjustedInd < _items.length - 1) {
       itemWidget = Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (index == 0) SizedBox(height: _listTopPadding),
           itemWidget,
-          if (index == _items.length - 1)
-            SizedBox(height: widget.padding.bottom),
-          widget.separatorBuilder(context, index),
+          widget.separatorBuilder(context, adjustedInd),
         ],
       );
     }
@@ -277,45 +273,44 @@ class InfiniteListViewState<PageKeyType, ItemType>
   @override
   Widget build(BuildContext context) {
     debugPrint('InfiniteListView. build...');
+    double listTopPadding = _isLastPageFetched
+        ? widget.padding.top
+        : math.max(
+            widget.loaderSize + widget.loaderSpacing * 2,
+            widget.padding.top,
+          );
 
     Widget listView = CustomScrollView(
-      anchor: 1,
-      center: _sliverCenterKey,
       controller: _scrollCtrlr,
-      slivers: <Widget>[
+      reverse: true,
+      slivers: [
         SliverPadding(
-          padding: EdgeInsets.only(
-            left: widget.padding.left,
-            right: widget.padding.right,
-          ),
+          padding: widget.padding.copyWith(top: listTopPadding),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
-              childCount: _pageItemsLength,
-              (context, index) => _itemBuilder(
-                context,
-                _pageItemsLength - index - 1,
-              ),
+              _itemBuilder,
+              childCount: _items.length,
             ),
           ),
         ),
-        SliverPadding(
-          key: _sliverCenterKey,
-          padding: EdgeInsets.only(
-            left: widget.padding.left,
-            right: widget.padding.right,
-          ),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              childCount: _items.length - _pageItemsLength,
-              (context, index) => _itemBuilder(
-                context,
-                _pageItemsLength + index,
-              ),
-            ),
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Container(
+            color: Colors.red,
+            width: double.infinity,
           ),
         ),
       ],
     );
+
+    // Widget listView = ListView.builder(
+    //   controller: _scrollCtrlr,
+    //   itemCount: _items.length,
+    //   shrinkWrap: _isReverse,
+    //   padding: widget.padding.copyWith(top: listTopPadding),
+    //   reverse: _isReverse,
+    //   itemBuilder: _itemBuilder,
+    // );
 
     return Stack(
       alignment: Alignment.topCenter,
