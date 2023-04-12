@@ -3,14 +3,12 @@ import 'package:visibility_detector/visibility_detector.dart';
 
 class VisibilityController {
   final void Function(int minInd, int maxInd) onVisibilityChange;
-  final bool Function() isWidgetAlive;
 
   final _visibleInds = <int>{};
   int _indexOffset = 0;
 
   VisibilityController({
     required this.onVisibilityChange,
-    required this.isWidgetAlive,
   });
 
   void updateItemVisibility({
@@ -39,17 +37,22 @@ class VisibilityController {
   void _notify() {
     num minInd = double.infinity;
     num maxInd = double.negativeInfinity;
-    for (var i in _visibleInds) {
-      if (i < minInd) minInd = i;
-      if (i > maxInd) maxInd = i;
+    if (_visibleInds.isEmpty) {
+      minInd = -1;
+      maxInd = -1;
+    } else {
+      for (var i in _visibleInds) {
+        if (i < minInd) minInd = i;
+        if (i > maxInd) maxInd = i;
+      }
+      minInd += _indexOffset;
+      maxInd += _indexOffset;
     }
-    minInd += _indexOffset;
-    maxInd += _indexOffset;
-
-    if (isWidgetAlive()) onVisibilityChange(minInd.toInt(), maxInd.toInt());
 
     debugPrint(
       'InfiniteListView. updateItemVisibility. $minInd...$maxInd',
     );
+
+    onVisibilityChange(minInd.toInt(), maxInd.toInt());
   }
 }

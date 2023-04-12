@@ -76,7 +76,6 @@ class InfiniteListViewState<PageKeyType, ItemType>
     extends State<InfiniteListView<PageKeyType, ItemType>> {
   late final _visibilityCtrlr = VisibilityController(
     onVisibilityChange: _onVisibilityChange,
-    isWidgetAlive: () => mounted,
   );
 
   late PageKeyType _pageKey = widget.initialPageKey;
@@ -180,6 +179,8 @@ class InfiniteListViewState<PageKeyType, ItemType>
   }
 
   void _onVisibilityChange(int minInd, int maxInd) {
+    if (!mounted) return;
+
     widget.onVisibilityChange?.call(minInd, maxInd);
 
     if (minInd < 4) _requestPage();
