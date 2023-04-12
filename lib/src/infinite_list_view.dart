@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:infinite_list_view/src/item_animation.dart';
 import 'package:infinite_list_view/src/visibility_controller.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
@@ -83,14 +84,16 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
   UnmodifiableListView<ItemType> get items => _items;
   UnmodifiableListView<ItemType> _items = UnmodifiableListView([]);
-  int _pageItemsLength = 0;
+
+  final _itemAnimations = <ItemType, ItemAnimation>{};
 
   bool _isFetching = false;
   bool _isLastPageFetched = false;
 
-  final _sliverCenterKey = GlobalKey();
   final _loaderKey = GlobalKey<InfiniteLoaderState>();
+  final _animListKey = GlobalKey<AnimatedListState>();
 
+  static const _isReverse = true;
   final _scrollCtrlr = ScrollController();
   int _autoScrollCalls = 0;
   bool _inAutoScrollRegion = true;
@@ -118,15 +121,16 @@ class InfiniteListViewState<PageKeyType, ItemType>
     debugPrint('InfiniteListView. addPage...');
     _visibilityCtrlr.pageAdded(pageItems.length);
     _pageKey = pageKey;
-    _pageItemsLength += pageItems.length;
+
+    _items = UnmodifiableListView([
+      ...pageItems.reversed,
+      ..._items,
+    ]);
+    _addPagetoAnimList(pageItems);
 
     setState(() {
       _isLastPageFetched = isLastPage;
       _isFetching = false;
-      _items = UnmodifiableListView([
-        ...pageItems.reversed,
-        ..._items,
-      ]);
     });
 
     HapticFeedback.mediumImpact();
@@ -144,12 +148,12 @@ class InfiniteListViewState<PageKeyType, ItemType>
     final autoScroll =
         _autoScrollCalls > 0 || offsetDiff <= widget.autoScrollThreshold;
 
-    setState(() {
-      _items = UnmodifiableListView([
-        ..._items,
-        ...items.reversed,
-      ]);
-    });
+    _items = UnmodifiableListView([
+      ..._items,
+      ...items.reversed,
+    ]);
+
+    _addNewItemsToAnimList(items);
 
     if (autoScroll) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -179,6 +183,22 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
   void scrollToBottom() {
     _autoScrollToBottom();
+  }
+
+  void _addNewItemsToAnimList(List<ItemType> newItems) {
+    for (var i = 0; i < newItems.length; i++) {
+      _itemAnimations[newItems[i]] = ItemAnimation(AnimationType.newMessage);
+
+      final insertInd = _isReverse ? 0 : (_items.length - newItems.length + i);
+      _animListKey.currentState!.insertItem(insertInd);
+    }
+  }
+
+  void _addPagetoAnimList(List<ItemType> pageItems) {
+    for (var i = 0; i < pageItems.length; i++) {
+      final insertInd = _isReverse ? (_items.length - pageItems.length + i) : 0;
+      _animListKey.currentState!.insertItem(insertInd);
+    }
   }
 
   void _onVisibilityChange(int minInd, int maxInd) {
@@ -240,13 +260,6 @@ class InfiniteListViewState<PageKeyType, ItemType>
     return false;
   }
 
-  double get _listTopPadding => _isLastPageFetched
-      ? widget.padding.top
-      : math.max(
-          widget.loaderSize + widget.loaderSpacing * 2,
-          widget.padding.top,
-        );
-
   Widget _itemBuilder(BuildContext context, int index) {
     Widget itemWidget = VisibilityDetector(
       key: ObjectKey(_items[index]),
@@ -262,10 +275,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (index == 0) SizedBox(height: _listTopPadding),
           itemWidget,
-          if (index == _items.length - 1)
-            SizedBox(height: widget.padding.bottom),
           widget.separatorBuilder(context, index),
         ],
       );
@@ -274,47 +284,37 @@ class InfiniteListViewState<PageKeyType, ItemType>
     return itemWidget;
   }
 
+  Widget _animatedItemBuilder(
+    BuildContext context,
+    int index,
+    Animation<double> anim,
+  ) {
+    final adjustedInd = _isReverse ? _items.length - index - 1 : index;
+
+    return AnimatedItem(
+      itemAnimation: _itemAnimations[_items[adjustedInd]],
+      animation: anim,
+      child: _itemBuilder(context, adjustedInd),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     debugPrint('InfiniteListView. build...');
 
-    Widget listView = CustomScrollView(
-      anchor: 1,
-      center: _sliverCenterKey,
+    double listTopPadding = _isLastPageFetched
+        ? widget.padding.top
+        : math.max(
+            widget.loaderSize + widget.loaderSpacing * 2,
+            widget.padding.top,
+          );
+
+    Widget listView = AnimatedList(
+      padding: widget.padding.copyWith(top: listTopPadding),
       controller: _scrollCtrlr,
-      slivers: <Widget>[
-        SliverPadding(
-          padding: EdgeInsets.only(
-            left: widget.padding.left,
-            right: widget.padding.right,
-          ),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              childCount: _pageItemsLength,
-              (context, index) => _itemBuilder(
-                context,
-                _pageItemsLength - index - 1,
-              ),
-            ),
-          ),
-        ),
-        SliverPadding(
-          key: _sliverCenterKey,
-          padding: EdgeInsets.only(
-            left: widget.padding.left,
-            right: widget.padding.right,
-          ),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              childCount: _items.length - _pageItemsLength,
-              (context, index) => _itemBuilder(
-                context,
-                _pageItemsLength + index,
-              ),
-            ),
-          ),
-        ),
-      ],
+      reverse: _isReverse,
+      shrinkWrap: true,
+      itemBuilder: _animatedItemBuilder,
     );
 
     return Stack(
