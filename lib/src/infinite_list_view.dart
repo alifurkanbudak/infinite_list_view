@@ -285,6 +285,9 @@ class InfiniteListViewState<PageKeyType, ItemType>
       controller: _scrollCtrlr,
       reverse: true,
       slivers: [
+        const SliverFillRemaining(
+          hasScrollBody: false,
+        ),
         SliverPadding(
           padding: widget.padding.copyWith(top: listTopPadding),
           sliver: SliverList(
@@ -292,13 +295,6 @@ class InfiniteListViewState<PageKeyType, ItemType>
               _itemBuilder,
               childCount: _items.length,
             ),
-          ),
-        ),
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Container(
-            color: Colors.red,
-            width: double.infinity,
           ),
         ),
       ],
