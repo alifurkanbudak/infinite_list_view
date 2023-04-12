@@ -290,13 +290,15 @@ class InfiniteListViewState<PageKeyType, ItemType>
             widget.padding.top,
           );
 
-    Widget listView = ListView.builder(
+    Widget listView = ListView(
       controller: _scrollCtrlr,
       physics: _scrollPhysics,
       reverse: _isReverse,
       padding: widget.padding.copyWith(top: listTopPadding),
-      itemBuilder: _itemBuilder,
-      itemCount: _items.length,
+      children: List<Widget>.generate(
+        _items.length,
+        (index) => _itemBuilder(context, index),
+      ),
     );
 
     return Stack(
