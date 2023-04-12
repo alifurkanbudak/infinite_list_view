@@ -295,6 +295,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
       physics: _scrollPhysics,
       reverse: _isReverse,
       padding: widget.padding.copyWith(top: listTopPadding),
+      addAutomaticKeepAlives: false,
       children: List<Widget>.generate(
         _items.length,
         (index) => _itemBuilder(context, index),
