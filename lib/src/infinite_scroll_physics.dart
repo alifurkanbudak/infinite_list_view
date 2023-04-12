@@ -31,7 +31,7 @@ class InfiniteScrollPhysics extends ScrollPhysics {
     state._keepNextScroll = false;
 
     debugPrint(
-      'InfiniteListView. adjustPositionForNewDimensions. keepNextScroll: $tempKeepNextScroll, sizeDiff: ${oldPosition.maxScrollExtent - newPosition.maxScrollExtent} $oldPosition ==> $newPosition',
+      'InfiniteListView. adjustPositionForNewDimensions. keepNextScroll: $tempKeepNextScroll, sizeChange: ${newPosition.maxScrollExtent - oldPosition.maxScrollExtent} $oldPosition ==> $newPosition',
     );
 
     return super.adjustPositionForNewDimensions(

@@ -290,32 +290,14 @@ class InfiniteListViewState<PageKeyType, ItemType>
             widget.padding.top,
           );
 
-    Widget listView = CustomScrollView(
+    Widget listView = ListView.builder(
       controller: _scrollCtrlr,
       physics: _scrollPhysics,
       reverse: _isReverse,
-      // shrinkWrap: _isReverse,
-      slivers: [
-        SliverPadding(
-          padding: widget.padding.copyWith(top: listTopPadding),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              _itemBuilder,
-              childCount: _items.length,
-            ),
-          ),
-        ),
-      ],
+      padding: widget.padding.copyWith(top: listTopPadding),
+      itemBuilder: _itemBuilder,
+      itemCount: _items.length,
     );
-
-    // Widget listView = ListView.builder(
-    //   controller: _scrollCtrlr,
-    //   itemCount: _items.length,
-    //   shrinkWrap: _isReverse,
-    //   padding: widget.padding.copyWith(top: listTopPadding),
-    //   reverse: _isReverse,
-    //   itemBuilder: _itemBuilder,
-    // );
 
     return Stack(
       alignment: Alignment.topCenter,
