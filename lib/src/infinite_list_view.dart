@@ -294,6 +294,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
       controller: _scrollCtrlr,
       physics: _scrollPhysics,
       reverse: _isReverse,
+      // shrinkWrap: _isReverse,
       slivers: [
         SliverPadding(
           padding: widget.padding.copyWith(top: listTopPadding),
