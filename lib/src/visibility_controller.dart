@@ -37,19 +37,27 @@ class VisibilityController {
   void pageAdded(int pageSize) => _indexOffset += pageSize;
 
   void _notify() {
+    if (!isWidgetAlive()) return;
+
     num minInd = double.infinity;
     num maxInd = double.negativeInfinity;
-    for (var i in _visibleInds) {
-      if (i < minInd) minInd = i;
-      if (i > maxInd) maxInd = i;
-    }
-    minInd += _indexOffset;
-    maxInd += _indexOffset;
 
-    if (isWidgetAlive()) onVisibilityChange(minInd.toInt(), maxInd.toInt());
+    if (_visibleInds.isEmpty) {
+      minInd = -1;
+      maxInd = -1;
+    } else {
+      for (var i in _visibleInds) {
+        if (i < minInd) minInd = i;
+        if (i > maxInd) maxInd = i;
+      }
+      minInd += _indexOffset;
+      maxInd += _indexOffset;
+    }
 
     debugPrint(
       'InfiniteListView. updateItemVisibility. $minInd...$maxInd',
     );
+
+    onVisibilityChange(minInd.toInt(), maxInd.toInt());
   }
 }

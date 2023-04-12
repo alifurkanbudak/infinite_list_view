@@ -21,7 +21,7 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
     this.autoScrollThreshold = 50,
     this.autoScrollStateChange,
     this.maxAutoScrollDuration = 200,
-    this.pageRequestThreshold = 100,
+    this.pageRequestThreshold = 3,
     this.loaderSize = 20,
     this.androidLoaderStrokeWidth = 2,
     this.loaderSpacing = 4,
@@ -56,8 +56,8 @@ class InfiniteListView<PageKeyType, ItemType> extends StatefulWidget {
   /// In milliseconds
   final int maxAutoScrollDuration;
 
-  /// In pixels
-  final double pageRequestThreshold;
+  /// In number of invisible items above screen
+  final int pageRequestThreshold;
 
   final double loaderSize;
 
@@ -204,7 +204,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
   void _onVisibilityChange(int minInd, int maxInd) {
     widget.onVisibilityChange?.call(minInd, maxInd);
 
-    if (minInd < 4) _requestPage();
+    if (minInd <= widget.pageRequestThreshold) _requestPage();
   }
 
   void _handleScrollChange() {
