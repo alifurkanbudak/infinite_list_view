@@ -283,11 +283,8 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
     Widget listView = CustomScrollView(
       controller: _scrollCtrlr,
-      reverse: true,
+      reverse: _isReverse,
       slivers: [
-        const SliverFillRemaining(
-          hasScrollBody: false,
-        ),
         SliverPadding(
           padding: widget.padding.copyWith(top: listTopPadding),
           sliver: SliverList(
