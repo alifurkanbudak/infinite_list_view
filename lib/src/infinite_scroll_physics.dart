@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 
+class InfiniteScrollPhysicsState {
+  bool _keepNextScroll = false;
+}
+
 class InfiniteScrollPhysics extends ScrollPhysics {
-  /// Should return whether to maintain the view
-  final bool Function() shouldKeepScroll;
+  final InfiniteScrollPhysicsState state;
 
   const InfiniteScrollPhysics({
     super.parent,
-    required this.shouldKeepScroll,
+    required this.state,
   });
 
   @override
   InfiniteScrollPhysics applyTo(ScrollPhysics? ancestor) {
     return InfiniteScrollPhysics(
       parent: buildParent(ancestor),
-      shouldKeepScroll: shouldKeepScroll,
+      state: state,
     );
   }
 
@@ -24,32 +27,30 @@ class InfiniteScrollPhysics extends ScrollPhysics {
     required bool isScrolling,
     required double velocity,
   }) {
+    final tempKeepNextScroll = state._keepNextScroll;
+    state._keepNextScroll = false;
+
     debugPrint(
-      'InfiniteListView. adjustPositionForNewDimensions. $oldPosition ==> $newPosition',
+      'InfiniteListView. adjustPositionForNewDimensions. keepNextScroll: $tempKeepNextScroll, $oldPosition ==> $newPosition',
     );
 
-    final position = super.adjustPositionForNewDimensions(
+    return super.adjustPositionForNewDimensions(
       oldPosition: oldPosition,
       newPosition: newPosition,
       isScrolling: isScrolling,
       velocity: velocity,
     );
 
-    if (!shouldKeepScroll()) {
-      debugPrint(
-          'InfiniteListView. adjustPositionForNewDimensions. no need to maintain scrol. position: $position');
-      return position;
-    }
+    // if (!tempKeepNextScroll) {
+    //   debugPrint(
+    //       'InfiniteListView. adjustPositionForNewDimensions. _keepNextScroll: false. position: $position');
+    //   return position;
+    // }
 
-    bool isFirstScrollableState =
-        (oldPosition.extentBefore + oldPosition.extentAfter == 0) &&
-            (newPosition.extentBefore + newPosition.extentAfter > 0);
-    if (isFirstScrollableState) {
-      debugPrint(
-          'InfiniteListView. adjustPositionForNewDimensions. isFirstScrollableState');
-      return newPosition.maxScrollExtent;
-    }
+    // return position;
+  }
 
-    return position;
+  void keepNextScroll() {
+    state._keepNextScroll = true;
   }
 }

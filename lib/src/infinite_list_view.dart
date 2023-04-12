@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:infinite_list_view/src/infinite_scroll_physics.dart';
 import 'package:infinite_list_view/src/visibility_controller.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
@@ -91,6 +92,10 @@ class InfiniteListViewState<PageKeyType, ItemType>
   final _loaderKey = GlobalKey<InfiniteLoaderState>();
 
   final _scrollCtrlr = ScrollController();
+  final _scrollPhysics = InfiniteScrollPhysics(
+    state: InfiniteScrollPhysicsState(),
+  );
+
   int _autoScrollCalls = 0;
   bool _inAutoScrollRegion = true;
 
@@ -127,7 +132,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
       ]);
     });
 
-    HapticFeedback.mediumImpact();
+    if (pageItems.isNotEmpty) HapticFeedback.mediumImpact();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_autoScrollCalls > 0) _autoScrollToBottom();
@@ -140,6 +145,8 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
     final autoScroll = _autoScrollCalls > 0 ||
         _scrollDistToBottom() <= widget.autoScrollThreshold;
+
+    _scrollPhysics.keepNextScroll();
 
     setState(() {
       _items = UnmodifiableListView([
