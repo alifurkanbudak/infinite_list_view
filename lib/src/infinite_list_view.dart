@@ -120,8 +120,10 @@ class InfiniteListViewState<PageKeyType, ItemType>
     required bool isLastPage,
   }) {
     debugPrint('InfiniteListView. addPage...');
-    _visibilityCtrlr.pageAdded(pageItems.length);
     _pageKey = pageKey;
+
+    _visibilityCtrlr.pageAdded(pageItems.length);
+    if (!_isReverse) _scrollPhysics.keepNextScroll();
 
     setState(() {
       _isLastPageFetched = isLastPage;
@@ -146,7 +148,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
     final autoScroll = _autoScrollCalls > 0 ||
         _scrollDistToBottom() <= widget.autoScrollThreshold;
 
-    _scrollPhysics.keepNextScroll();
+    if (_isReverse) _scrollPhysics.keepNextScroll();
 
     setState(() {
       _items = UnmodifiableListView([
@@ -290,6 +292,7 @@ class InfiniteListViewState<PageKeyType, ItemType>
 
     Widget listView = CustomScrollView(
       controller: _scrollCtrlr,
+      physics: _scrollPhysics,
       reverse: _isReverse,
       slivers: [
         SliverPadding(
